@@ -1,0 +1,1 @@
+Es una llamada al sistema, pues para poder alocar memoria es necesario pedirsela al SO.

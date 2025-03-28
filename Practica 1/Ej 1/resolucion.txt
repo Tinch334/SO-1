@@ -1,0 +1,1 @@
+El comando "echo $$" muestra el valor de la variable "$", que contiene el PID del shell.

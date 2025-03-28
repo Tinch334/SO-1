@@ -1,0 +1,67 @@
+Ej a
+int main(int argc, char const *argv[])
+{
+    //No se imprime nada, el trace dice: "-1 EBADF (Descriptor de archivo erróneo)".
+    close(1);
+    fprintf(stdout, "facha");
+    return 0;
+}
+
+Ej b
+int main(int argc, char const *argv[])
+{
+    int var;
+    //Se imprime basura, y tratar de ver el archivo con fstat da un error.
+    close(0);
+    fscanf(stdin, "%d", &var);
+    printf("Read: %d\n", var);
+    return 0;
+}
+
+Ej c
+
+int main(int argc, char const *argv[])
+{
+    int var;
+    
+    //Solo se cierra la copia no el original.
+    int newstdin = dup(stdin);
+    close(newstdin);
+
+    fscanf(stdin, "%d", &var);
+    printf("Read: %d\n", var);
+    return 0;
+}
+
+Ej d
+Al hacer fork, el hijo y el padre tienen pid distintos (el padre de queda con el pid original). 
+Al hacer exec() el pid no cambia ya que se reemplaza el programa nuevo con el viejo (sin cambiar de lugar)
+
+Ej e
+int main(int argc, char const *argv[])
+{
+    pid_t pid1;
+
+    //El hijo aparece como "Defunct", sigue existiendo porque el padre no puede realizar el proceso para matarlo.
+    pid1=fork();
+
+    if(pid1!=0) {
+        printf("PID: %d\n", getpid());
+        
+        while(1);
+    }
+    exit(-1);
+}
+
+Ej f
+El uso de memoria no aumenta fisica no aumenta, pues solo se aloco memoria. Si aumenta la memoria virtual usada, que pasa a ser 1GB.
+
+Ej g
+El uso de memoria del proceso padre no cambia al hacer fork. Lo que si ocurre es que ahora la misma cantidad de memoria que usaba el padre tambien
+esta siendo usado por el hijo.
+
+Ej h
+El FD no cambia entre el padre y el hijo. Pues el hijo recibe una copia de todos los datos que tiene el padre.
+
+Ej i
+Tecnicamente no es posible, pues cambiar el directorio de la shell implica un cambio en una variable del programa shell.

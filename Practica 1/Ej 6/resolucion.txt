@@ -1,0 +1,2 @@
+La funcion "getchar" no es una llamada al sistema, simplemente lee un caracter de stdin.
+Por el otro lado "ungetc" funciona utilizando FLOCK para conseguir acceso de escritura a stdin e insertar el caracter.

@@ -1,0 +1,1 @@
+Al terminar un proceso el SO libera toda la memoria asignada al mismo.

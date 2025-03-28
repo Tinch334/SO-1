@@ -1,0 +1,2 @@
+Creemos que el comando "yes" simplemente tiene un loop infinito que imprime "y" a stdout.
+El uso del CPU de "yes" es despreciable, pues lo unico que hace es imprimir un caracter.
