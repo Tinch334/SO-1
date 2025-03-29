@@ -1,0 +1,11 @@
+total 37
+drwxrwxrwx 1 martin martin   512 Mar 28 23:24 .
+drwxrwxrwx 1 martin martin   512 Mar 28 18:23 ..
+-rwxrwxrwx 1 martin martin     0 Mar 28 23:24 file.txt
+-rwxrwxrwx 1 martin martin  2150 Mar 28 23:24 mini_shell.c
+-rwxrwxrwx 1 martin martin    87 Mar 28 19:47 mini_shell.h
+-rwxrwxrwx 1 martin martin 17288 Mar 28 23:24 shell
+-rwxrwxrwx 1 martin martin  1431 Mar 28 23:23 slist.c
+-rwxrwxrwx 1 martin martin   656 Mar 28 23:19 slist.h
+-rwxrwxrwx 1 martin martin  1265 Mar 28 21:13 string_aux.c
+-rwxrwxrwx 1 martin martin   572 Mar 28 20:43 string_aux.h

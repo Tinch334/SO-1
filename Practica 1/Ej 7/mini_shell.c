@@ -4,19 +4,14 @@
 #include <string.h>
 #include <sys/wait.h>
 
+#include "mini_shell.h"
+#include "string_aux.h"
+#include "slist.h"
+
 #define MAX_COMMAND_LENGTH 1024
 #define MAX_ARG_COUNT 16
-#define SEPARATOR " "
-
-
-//If the given character is found returns it's position, otherwise returns -1.
-int find_char(char *str, char c, size_t length) {
-    for (int i = length - 1; i >= 0; i--)
-        if (str[i] == c)
-            return i;
-
-    return -1;
-}
+#define SPACE_SEPARATOR " "
+#define ARROW_SEPARATOR ">"
 
 
 int main()
@@ -25,44 +20,46 @@ int main()
         fprintf(stdout, "> ");
 
         //Read command.
-        char command[MAX_COMMAND_LENGTH + 1];
-        fgets(command, MAX_COMMAND_LENGTH, stdin);
-        //Remove read newline
-        command[strlen(command) - 1] = '\0';
+        char *fullCommand = get_string(10);
 
         //Check for exit command.
-        if (strcmp(command, "exit") == 0)
+        if (strcmp(fullCommand, "exit") == 0)
             break;
 
-        pid_t command_id = fork();
+        pid_t id = fork();
 
-        if (command_id == 0) {
-            char *name = strtok(command, SEPARATOR);
+        if (id == 0) {
+            char *command = strtok(fullCommand, ARROW_SEPARATOR);
+            clean_string(command, strlen(command));
+            char *filename = strtok(NULL, ARROW_SEPARATOR);
 
-            char *arguments[MAX_ARG_COUNT];
-            size_t arg_counter = 1;
-            char *token;
+            if (filename != NULL) {
+                clean_string(filename, strlen(filename));
 
-            //The first argument should be the filename of the executable.
-            arguments[0] = strdup(name);
-
-            //Store all arguments in the argument list.
-            while (token = strtok(NULL, SEPARATOR)) {
-                arguments[arg_counter] = strdup(token);
-                arg_counter++;
-
-                //Check there's space for the null terminator.
-                if (arg_counter >= MAX_ARG_COUNT - 1) {
-                    fprintf(stderr, "Maximum argument amount exceeded\n");
+                //Check if filename is valid.
+                if (freopen(filename, "w", stdout) == NULL) {
+                    fprintf(stderr, "\"%s\" is not a valid path\n", filename);
                     exit(-1);
                 }
             }
 
+            char *name = strtok(command, SPACE_SEPARATOR);
+
+            SList *arguments = slist_create();
+            char *token;
+
+            //The first argument should be the filename of the executable.
+            arguments = slist_add_end(arguments, name);
+
+            //Store all arguments in the argument list.
+            while ((token = strtok(NULL, SPACE_SEPARATOR)) != NULL)
+                arguments = slist_add_end(arguments, token);
+
             //According to the documentation the last element in the argument list must be a null terminator.
-            arguments[arg_counter] = NULL;
+            char **arguments_array = slist_to_list(arguments);
 
             //Execute command with given arguments.
-            execvp(name, arguments);
+            execvp(name, arguments_array);
 
             //If execution has not been transferred to the command, show an error.
             fprintf(stderr, "Invalid command \"%s\"\n", name);
