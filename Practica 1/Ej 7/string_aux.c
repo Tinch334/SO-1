@@ -26,14 +26,14 @@ char *get_string(size_t initial_length) {
     return string;
 }
 
-void clean_string(char *string, size_t length) {
+void clean_string(char *string) {
     //Remove trailing whitespace.
-    size_t ptr = length - 1;
+    size_t ptr = strlen(string) - 1;
     for (; ptr >= 0 && string[ptr] == ' '; ptr--);
     string[ptr + 1] = '\0';
     
     //String has been modified, recalculate length.
-    length = strlen(string);
+    size_t length = strlen(string);
 
     //Remove leading whitespace.
     ptr = 0;

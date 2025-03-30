@@ -17,6 +17,7 @@ typedef struct _SNode {
 typedef struct {
    SNode *firstNode;
    SNode *lastNode; 
+   size_t length;
 } SList;
 
 
@@ -34,5 +35,8 @@ SList* slist_add_end(SList *list, char *value);
 
 //Returns the linked list as a normal list, with a "NULL" as the last element.
 char **slist_to_list(SList *list);
+
+//Returns the length of the list.
+size_t slist_length(SList *list);
 
 #endif /* __SLIST_H__ */

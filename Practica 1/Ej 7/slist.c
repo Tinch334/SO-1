@@ -11,6 +11,7 @@ SList* slist_create() {
 
     newList->firstNode = NULL;
     newList->lastNode = NULL;
+    newList->length = 0;
 
     return newList;
 }
@@ -48,24 +49,27 @@ SList* slist_add_end(SList *list, char *value) {
         list->lastNode->next = newNode;
 
     list->lastNode = newNode;
+    list->length = list->length + 1;
 
     return list;
 }
 
 
 char **slist_to_list(SList *list) {
-    size_t length = 0;
-    for (SNode *node = list->firstNode; node != NULL ; node = node->next, length++);
-
     //Allocate extra space for "NULL".
-    char **list_array = malloc(sizeof(char *) * (length + 1));
+    char **list_array = malloc(sizeof(char *) * (list->length + 1));
 
     SNode *node = list->firstNode;
     for (size_t i = 0; node != NULL; node = node->next, i++)
         list_array[i] = strdup(node->value);
 
     //Terminate list with "NULL", this is to follow execvp calling convention.
-    list_array[length] = NULL;
+    list_array[list->length] = NULL;
 
     return list_array;
+}
+
+
+size_t slist_length(SList *list) {
+    return list->length;
 }

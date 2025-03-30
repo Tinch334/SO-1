@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "mini_shell.h"
 #include "string_aux.h"
@@ -30,48 +33,54 @@ int main()
         pid_t id;
 
         if (hasRedirect) {
-            puts("Redirect");
-            fflush(stdout);
-
             if (hasPipe == 1) {
                 fprintf(stderr, "Cannot pipe and use redirection at the same time\n");
                 exit(-1);
             }
 
             char *command = strtok(fullCommand, ARROW_SEPARATOR);
-            clean_string(command, strlen(command));
+            clean_string(command);
             char *filename = strtok(NULL, ARROW_SEPARATOR);
-            clean_string(filename, strlen(filename));
+            clean_string(filename);
+            int fileFd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+
+            if (fileFd == (-1)) {
+                fprintf(stderr, "\"%s\" is an invalid filename\n", filename);
+                exit(-1);
+            }
 
             id = fork();
 
             if (id == 0)
-                executeCommand(command, NULL, filename);
+                executeCommand(command, -1, fileFd);
             else
                 wait(NULL);
         }
         //There's pipe but no redirection.
         else if (hasPipe) {
-            puts("Pipe");
-            fflush(stdout);
-
             SList *pipeCommands = slist_create();
             char *token;
 
             //Add first element.
-            pipeCommands = slist_add_end(pipeCommands, strtok(fullCommand, PIPE_SEPARATOR));
+            char *firstElem = strtok(fullCommand, PIPE_SEPARATOR);
+            clean_string(firstElem);
+            pipeCommands = slist_add_end(pipeCommands, firstElem);
 
+            //Add the rest of the commands.
             while ((token = strtok(NULL, PIPE_SEPARATOR)) != NULL) {
-                clean_string(token, strlen(token));
+                clean_string(token);
                 pipeCommands = slist_add_end(pipeCommands, token);
             }
+
+            pipeExecutor(pipeCommands);
+            //Convert commands to string list.
         }
         //No pipe or redirection.
         else {
             id = fork();
 
             if (id == 0) {
-                executeCommand(fullCommand, NULL, NULL);
+                executeCommand(fullCommand, -1, -1);
             }
             else
                 wait(NULL);
@@ -84,19 +93,72 @@ int main()
 }
 
 
-void executeCommand(char *command, const char *in, const char *out) {
-    if (in != NULL)
-        //Check if filename is valid.
-        if (freopen(in, "r", stdin) == NULL) {
-            fprintf(stderr, "\"%s\" is not a valid path\n", in);
-            exit(-1);
+void pipeExecutor(SList *commands) {
+    size_t commandCount = slist_length(commands);
+    int pipefd[commandCount - 1][2];
+    pid_t p;
+
+    SNode *node = commands->firstNode;
+    for (size_t i = 0; i < commandCount; i++, node = node->next) {
+        //Check we are not in the last command.
+        if (i < commandCount - 1)
+            //Create pipe and check for errors.
+            if (pipe(pipefd[i]) == -1) {
+                fprintf(stderr, "FATAL ERROR: Could not create pipe\n");
+                exit(-1);
+            }
+
+        p = fork();
+
+        if (p == 0) {
+            //We cannot use the commodities provided by "executeCommand", because leaving unclosed pipes leads to errors.
+            if (i > 0) {
+                dup2(pipefd[i - 1][0], STDIN_FILENO);
+                close(pipefd[i - 1][0]);
+            }
+            if (i < commandCount - 1) {
+                dup2(pipefd[i][1], STDOUT_FILENO);
+                close(pipefd[i][1]);
+            }
+            
+            for (size_t j = 0; j < commandCount - 1; j++) {
+                close(pipefd[j][0]);
+                close(pipefd[j][1]);
+            }
+            /*int inFd = i > 0 ? pipefd[i - 1][0] : -1;
+            int outFd = i < commandCount - 1 ? pipefd[i][1] : -1;*/
+            executeCommand(node->value, -1, -1);
+        }
     }
 
-    if (out != NULL)
+    //Close all unused pipes since we are the parent..
+    for (size_t i = 0; i < commandCount - 1; i++) {
+        close(pipefd[i][0]);
+        close(pipefd[i][1]);
+    }
+
+    //Wait until all children finish executing
+    while (wait(NULL) > 0);
+}
+
+
+void executeCommand(char *command, const int in, const int out) {
+    if (in > 0)
         //Check if filename is valid.
-        if (freopen(out, "w", stdout) == NULL) {
-            fprintf(stderr, "\"%s\" is not a valid path\n", out);
+        if (dup2(in, 0) == (-1)) {
+            fprintf(stderr, "FATAL ERROR: Invalid FD for dup2\n");
             exit(-1);
+
+        close(in);
+    }
+
+    if (out > 0)
+        //Check if filename is valid.
+        if (dup2(out, 1) == (-1)) {
+            fprintf(stderr, "FATAL ERROR: Invalid FD for dup2\n");
+            exit(-1);
+
+        close(out);
     }
 
     char *name = strtok(command, SPACE_SEPARATOR);
