@@ -44,10 +44,13 @@ void clean_string(char *string, size_t length) {
     }
 }
 
-size_t find_char(char *str, char c, size_t length) {
-    for (size_t i = length - 1; i >= 0; i--)
-        if (str[i] == c)
-            return i;
+size_t find_char(char *str, char c) {
+    while (*str != '\0') {
+        if (*str == c)
+            return 1;
 
-    return -1;
+        str++;
+    }
+
+    return 0;
 }
