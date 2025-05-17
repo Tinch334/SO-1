@@ -1,45 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <omp.h>
 #include <math.h>
-#include <sys/time.h>
-#include <stdint.h>
+#include <time.h>
+#include <inttypes.h>
+#include <omp.h>
 
 int ompCheck(long number) {
-    int divs = 0;
-
-    int s = ceil(sqrt(number));
+    int found = 0;
+    long s = (long)ceil(sqrt((double)number));
 
     #pragma omp parallel for
     for (long i = 2; i < s; i++)
     {
         if (number % i == 0) {
             #pragma omp atomic write
-            divs = 1;
+            found = 1;
         }
     }
 
-    return divs;
+    return found;
 }
 
 int nonOmpCheck(long number) {
-    int divs = 0;
+    int found = 0;
 
-    int s = ceil(sqrt(number));
+    long s = (long)ceil(sqrt((double)number));
 
     for (long i = 2; i < s; i++)
     {
         if (number % i == 0) {
-            divs = 1;
+            found = 1;
             break;
         }
     }
 
-    return divs;
+    return found;
 }
 
 int main(int argc, char const *argv[])
